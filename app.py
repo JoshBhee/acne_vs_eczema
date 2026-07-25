@@ -3,9 +3,10 @@ import tensorflow as tf
 from PIL import Image
 import numpy as np
 
-# ==============================
+
+# ============================================================
 # LOAD MODEL
-# ==============================
+# ============================================================
 
 @st.cache_resource
 def load_model():
@@ -15,21 +16,172 @@ def load_model():
 model = load_model()
 
 
-# ==============================
+# ============================================================
 # APP TITLE
-# ==============================
+# ============================================================
 
 st.title("Acne vs Eczema Classifier")
 
 st.write(
-    "Upload a clear image of the affected skin area "
-    "to check whether it is more likely to be Acne or Eczema."
+    "Upload a clear close-up image of the affected skin area. "
+    "The system will first check whether the image appears suitable "
+    "for Acne/Eczema classification."
 )
 
 
-# ==============================
+# ============================================================
+# SETTINGS
+# ============================================================
+
+# Minimum confidence required for Acne/Eczema prediction
+CONFIDENCE_THRESHOLD = 70
+
+# Minimum percentage of skin-like pixels
+SKIN_RATIO_THRESHOLD = 0.10
+
+# Minimum colour diversity
+# Helps reject images that are extremely uniform or unusual
+COLOUR_VARIATION_THRESHOLD = 15
+
+
+# ============================================================
+# FUNCTION 1: CHECK IF IMAGE LOOKS LIKE SKIN
+# ============================================================
+
+def check_skin_image(image):
+
+    # Resize image
+    small_image = image.resize((100, 100))
+
+    # Convert to numpy
+    img = np.array(
+        small_image,
+        dtype=np.float32
+    )
+
+    # RGB channels
+    r = img[:, :, 0]
+    g = img[:, :, 1]
+    b = img[:, :, 2]
+
+    # Basic skin-like pixel detection
+    skin_pixels = (
+        (r > 40) &
+        (g > 20) &
+        (b > 10) &
+        (r > g) &
+        (r > b) &
+        ((r - g) > 5)
+    )
+
+    # Percentage of skin-like pixels
+    skin_ratio = np.mean(skin_pixels)
+
+    # Calculate colour variation
+    colour_variation = np.mean(
+        np.std(img, axis=(0, 1))
+    )
+
+    # Determine whether image passes basic check
+    is_skin_like = (
+        skin_ratio >= SKIN_RATIO_THRESHOLD
+        and
+        colour_variation >= COLOUR_VARIATION_THRESHOLD
+    )
+
+    return (
+        is_skin_like,
+        skin_ratio,
+        colour_variation
+    )
+
+
+# ============================================================
+# FUNCTION 2: CHECK IMAGE QUALITY
+# ============================================================
+
+def check_image_quality(image):
+
+    # Convert to numpy
+    img = np.array(
+        image,
+        dtype=np.float32
+    )
+
+    # Calculate brightness
+    brightness = np.mean(img)
+
+    # Calculate contrast
+    contrast = np.std(img)
+
+    # Very dark image
+    if brightness < 25:
+
+        return False, "The image is too dark."
+
+    # Very bright image
+    if brightness > 245:
+
+        return False, "The image is too bright."
+
+    # Very low contrast
+    if contrast < 15:
+
+        return False, "The image has very low contrast."
+
+    return True, ""
+
+
+# ============================================================
+# FUNCTION 3: PREDICT ACNE OR ECZEMA
+# ============================================================
+
+def predict_condition(image):
+
+    # Resize to model input size
+    img = image.resize((224, 224))
+
+    # Convert to numpy
+    img_array = np.array(
+        img,
+        dtype=np.float32
+    ) / 255.0
+
+    # Add batch dimension
+    img_array = np.expand_dims(
+        img_array,
+        axis=0
+    )
+
+    # Model prediction
+    prediction = float(
+        model.predict(
+            img_array,
+            verbose=0
+        )[0][0]
+    )
+
+    # Your class mapping:
+    #
+    # 0 = Acne
+    # 1 = Eczema
+
+    if prediction >= 0.5:
+
+        label = "Eczema"
+        confidence = prediction * 100
+
+    else:
+
+        label = "Acne"
+        confidence = (1 - prediction) * 100
+
+    return label, confidence
+
+
+# ============================================================
 # UPLOAD IMAGE
-# ==============================
+# ============================================================
 
 uploaded_file = st.file_uploader(
     "Choose an image...",
@@ -37,56 +189,21 @@ uploaded_file = st.file_uploader(
 )
 
 
-# ==============================
-# IMAGE VALIDATION
-# ==============================
-
-def looks_like_skin(image):
-    """
-    Basic skin-image validation.
-    This is NOT a medical diagnosis.
-    It is only used to reject obvious non-skin images.
-    """
-
-    # Resize for analysis
-    small_image = image.resize((100, 100))
-
-    # Convert to numpy
-    img = np.array(small_image).astype(np.float32)
-
-    # Separate RGB channels
-    r = img[:, :, 0]
-    g = img[:, :, 1]
-    b = img[:, :, 2]
-
-    # Basic skin-colour pixel detection
-    skin_pixels = (
-        (r > 60) &
-        (g > 40) &
-        (b > 20) &
-        (r > g) &
-        (r > b) &
-        ((r - g) > 10)
-    )
-
-    # Calculate percentage of pixels that look skin-like
-    skin_ratio = np.mean(skin_pixels)
-
-    return skin_ratio > 0.10
-
-
-# ==============================
-# PROCESS IMAGE
-# ==============================
+# ============================================================
+# MAIN PROCESSING
+# ============================================================
 
 if uploaded_file is not None:
 
     try:
 
         # Open image
-        image = Image.open(uploaded_file).convert("RGB")
+        image = Image.open(
+            uploaded_file
+        ).convert("RGB")
 
-        # Display image
+
+        # Display uploaded image
         st.image(
             image,
             caption="Uploaded Image",
@@ -94,99 +211,114 @@ if uploaded_file is not None:
         )
 
 
-        # ==============================
-        # VALIDATE IMAGE
-        # ==============================
+        # ====================================================
+        # STEP 1: IMAGE QUALITY CHECK
+        # ====================================================
 
-        valid_skin_image = looks_like_skin(image)
+        quality_ok, quality_message = check_image_quality(
+            image
+        )
 
 
-        if not valid_skin_image:
+        if not quality_ok:
 
-            st.warning(
-                "⚠️ This image does not appear to contain a clear "
-                "skin region."
+            st.error(
+                "❌ Image Quality Error"
             )
 
-            st.info(
-                "Please upload a clear close-up image of the affected "
-                "skin area."
+            st.warning(
+                f"{quality_message} "
+                "Please upload a clearer image."
             )
 
 
         else:
 
-            # ==============================
-            # PREPROCESS IMAGE
-            # ==============================
+            # =================================================
+            # STEP 2: NON-SKIN IMAGE CHECK
+            # =================================================
 
-            img = image.resize((224, 224))
-
-            img_array = np.array(
-                img,
-                dtype=np.float32
-            ) / 255.0
-
-            img_array = np.expand_dims(
-                img_array,
-                axis=0
-            )
+            (
+                skin_like,
+                skin_ratio,
+                colour_variation
+            ) = check_skin_image(image)
 
 
-            # ==============================
-            # MODEL PREDICTION
-            # ==============================
+            if not skin_like:
 
-            prediction = float(
-                model.predict(
-                    img_array,
-                    verbose=0
-                )[0][0]
-            )
+                st.error(
+                    "❌ Invalid Image"
+                )
 
+                st.warning(
+                    "This image does not appear to contain "
+                    "a suitable skin region."
+                )
 
-            # ==============================
-            # CLASSIFICATION
-            # ==============================
+                st.info(
+                    "Please upload a clear close-up image "
+                    "of the affected skin area."
+                )
 
-            # Class mapping:
-            # 0 = Acne
-            # 1 = Eczema
-
-            if prediction >= 0.5:
-
-                label = "Eczema"
-                confidence = prediction * 100
 
             else:
 
-                label = "Acne"
-                confidence = (1 - prediction) * 100
+                # =============================================
+                # STEP 3: ACNE VS ECZEMA PREDICTION
+                # =============================================
 
-
-            # ==============================
-            # DISPLAY RESULT
-            # ==============================
-
-            st.subheader(
-                f"Prediction: {label}"
-            )
-
-            st.write(
-                f"Confidence: {confidence:.2f}%"
-            )
-
-
-            # ==============================
-            # LOW CONFIDENCE
-            # ==============================
-
-            if confidence < 60:
-
-                st.warning(
-                    "⚠️ The model is not very confident in this "
-                    "prediction. Please upload a clearer image."
+                label, confidence = predict_condition(
+                    image
                 )
+
+
+                # =============================================
+                # STEP 4: UNKNOWN / UNFAMILIAR IMAGE CHECK
+                # =============================================
+
+                if confidence < CONFIDENCE_THRESHOLD:
+
+                    st.error(
+                        "⚠️ Uncertain Classification"
+                    )
+
+                    st.warning(
+                        "This image may not look sufficiently "
+                        "similar to the Acne or Eczema images "
+                        "used to train the model."
+                    )
+
+                    st.info(
+                        "Please upload a clearer close-up image "
+                        "showing the affected skin area."
+                    )
+
+
+                else:
+
+                    # =========================================
+                    # FINAL RESULT
+                    # =========================================
+
+                    st.subheader(
+                        f"Prediction: {label}"
+                    )
+
+                    st.write(
+                        f"Confidence: {confidence:.2f}%"
+                    )
+
+
+                    # =========================================
+                    # DISCLAIMER
+                    # =========================================
+
+                    st.caption(
+                        "This AI prediction is for educational "
+                        "and research purposes only and is not "
+                        "a medical diagnosis."
+                    )
 
 
     except Exception as e:
