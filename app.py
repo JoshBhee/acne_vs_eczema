@@ -78,18 +78,12 @@ if uploaded_file is not None:
             verbose=0
         )
 
-        # Show raw output for testing
-        st.write("Raw model output:", raw_prediction)
-        st.write("Output shape:", raw_prediction.shape)
-
 
         # ==============================
         # CLASSIFICATION
         # ==============================
 
         prediction = float(raw_prediction[0][0])
-
-        st.write("Prediction value:", prediction)
 
 
         # Your class mapping:
