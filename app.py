@@ -138,211 +138,76 @@ def preprocess_image(image):
 
 # ============================================================
 # MAKE PREDICTION
-# ============================================================
+# ===========================================================
+# ==============================
+# MAKE PREDICTION
+# ==============================
 
-def predict_image(image):
+prediction = model.predict(
+    img_array,
+    verbose=0
+)
 
-    img_array = preprocess_image(
-        image
+predicted_class = np.argmax(prediction[0])
+
+confidence = float(
+    prediction[0][predicted_class] * 100
+)
+
+
+# ==============================
+# CLASS NAMES
+# ==============================
+
+class_names = [
+    "Acne",
+    "Eczema",
+    "Other"
+]
+
+label = class_names[predicted_class]
+
+
+# ==============================
+# DISPLAY RESULT
+# ==============================
+
+st.subheader(
+    f"Prediction: {label}"
+)
+
+st.write(
+    f"Confidence: {confidence:.2f}%"
+)
+
+
+# ==============================
+# LOW CONFIDENCE WARNING
+# ==============================
+
+if confidence < 60:
+
+    st.warning(
+        "⚠️ The model is not very confident in this prediction. "
+        "Please upload a clearer image showing the affected skin area."
     )
 
-    predictions = model.predict(
-        img_array,
-        verbose=0
-    )[0]
 
-    predicted_index = np.argmax(
-        predictions
+# ==============================
+# MEDICAL DISCLAIMER
+# ==============================
+
+st.info(
+    "This AI prediction is for educational and research purposes only "
+    "and is not a medical diagnosis."
+)
+
+# ==============================
+# ERROR HANDLING
+# ==============================
+
+except Exception as e:
+
+    st.error(
+        f"Something went wrong processing this image: {e}"
     )
-
-    predicted_class = CLASS_NAMES[
-        predicted_index
-    ]
-
-    confidence = (
-        predictions[predicted_index] * 100
-    )
-
-    return (
-        predicted_class,
-        confidence,
-        predictions
-    )
-
-
-# ============================================================
-# DISPLAY RESULTS
-# ============================================================
-
-if uploaded_file is not None:
-
-    try:
-
-        # ====================================================
-        # OPEN IMAGE
-        # ====================================================
-
-        image = Image.open(
-            uploaded_file
-        ).convert("RGB")
-
-
-        # ====================================================
-        # DISPLAY IMAGE
-        # ====================================================
-
-        st.image(
-            image,
-            caption="Uploaded Image",
-            use_container_width=True
-        )
-
-
-        # ====================================================
-        # CHECK IMAGE QUALITY
-        # ====================================================
-
-        quality_ok, quality_message = (
-            check_image_quality(
-                image
-            )
-        )
-
-
-        if not quality_ok:
-
-            st.error(
-                "❌ Image Quality Problem"
-            )
-
-            st.warning(
-                quality_message
-            )
-
-
-        else:
-
-            # ================================================
-            # PREDICT
-            # ================================================
-
-            predicted_class, confidence, predictions = (
-                predict_image(
-                    image
-                )
-            )
-
-
-            # ================================================
-            # LOW CONFIDENCE = POSSIBLY UNFAMILIAR IMAGE
-            # ================================================
-
-            if confidence < 60:
-
-                st.warning(
-                    "⚠️ The model is uncertain about this image."
-                )
-
-                st.write(
-                    "The image may not closely resemble "
-                    "the images used during training."
-                )
-
-
-            # ================================================
-            # OTHER CLASS
-            # ================================================
-
-            if predicted_class == "Other":
-
-                st.subheader(
-                    "Prediction: Neither Acne nor Eczema"
-                )
-
-                st.write(
-                    f"Confidence: {confidence:.2f}%"
-                )
-
-                st.info(
-                    "The model classified this image as "
-                    "Other. It does not appear sufficiently "
-                    "similar to the Acne or Eczema classes "
-                    "used during training."
-                )
-
-
-            # ================================================
-            # ACNE
-            # ================================================
-
-            elif predicted_class == "Acne":
-
-                st.subheader(
-                    "Prediction: Acne"
-                )
-
-                st.write(
-                    f"Confidence: {confidence:.2f}%"
-                )
-
-
-            # ================================================
-            # ECZEMA
-            # ================================================
-
-            elif predicted_class == "Eczema":
-
-                st.subheader(
-                    "Prediction: Eczema"
-                )
-
-                st.write(
-                    f"Confidence: {confidence:.2f}%"
-                )
-
-
-            # ================================================
-            # SHOW CLASS PROBABILITIES
-            # ================================================
-
-            with st.expander(
-                "View model confidence details"
-            ):
-
-                st.write(
-                    f"Acne: "
-                    f"{predictions[0] * 100:.2f}%"
-                )
-
-                st.write(
-                    f"Eczema: "
-                    f"{predictions[1] * 100:.2f}%"
-                )
-
-                st.write(
-                    f"Other: "
-                    f"{predictions[2] * 100:.2f}%"
-                )
-
-
-            # ================================================
-            # DISCLAIMER
-            # ================================================
-
-            st.caption(
-                "⚠️ This application is for educational "
-                "and research purposes only. It does not "
-                "provide a medical diagnosis."
-            )
-
-
-    except Exception as e:
-
-        st.error(
-            "Something went wrong while processing "
-            "the image."
-        )
-
-        st.exception(
-            e
-        )
