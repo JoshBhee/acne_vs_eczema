@@ -135,10 +135,6 @@ def preprocess_image(image):
 
     return img_array
 
-
-# ============================================================
-# MAKE PREDICTION
-# ===========================================================
 # ==============================
 # MAKE PREDICTION
 # ==============================
@@ -148,8 +144,10 @@ prediction = model.predict(
     verbose=0
 )
 
+# Get the predicted class
 predicted_class = np.argmax(prediction[0])
 
+# Get confidence
 confidence = float(
     prediction[0][predicted_class] * 100
 )
@@ -201,13 +199,3 @@ st.info(
     "This AI prediction is for educational and research purposes only "
     "and is not a medical diagnosis."
 )
-
-# ==============================
-# ERROR HANDLING
-# ==============================
-
-except Exception as e:
-
-    st.error(
-        f"Something went wrong processing this image: {e}"
-    )
