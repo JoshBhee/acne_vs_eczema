@@ -33,10 +33,6 @@ st.write(
     "Upload a clear close-up image of the affected skin area."
 )
 
-st.info(
-    "The model classifies images into Acne, Eczema, or Other."
-)
-
 
 uploaded_file = st.file_uploader(
     "Choose an image...",
