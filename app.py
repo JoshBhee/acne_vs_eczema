@@ -345,8 +345,7 @@ if uploaded_file is not None:
 
         st.exception(
             error
-    )    return True, ""
-
+    )    
 
 # ============================================================
 # PREPROCESS IMAGE
