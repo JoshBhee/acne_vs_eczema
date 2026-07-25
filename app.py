@@ -152,7 +152,6 @@ confidence = float(
     prediction[0][predicted_class] * 100
 )
 
-
 # ==============================
 # CLASS NAMES
 # ==============================
@@ -164,7 +163,6 @@ class_names = [
 ]
 
 label = class_names[predicted_class]
-
 
 # ==============================
 # DISPLAY RESULT
@@ -178,18 +176,15 @@ st.write(
     f"Confidence: {confidence:.2f}%"
 )
 
-
 # ==============================
 # LOW CONFIDENCE WARNING
 # ==============================
 
 if confidence < 60:
-
     st.warning(
         "⚠️ The model is not very confident in this prediction. "
         "Please upload a clearer image showing the affected skin area."
     )
-
 
 # ==============================
 # MEDICAL DISCLAIMER
