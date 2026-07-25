@@ -16,14 +16,15 @@ st.set_page_config(
 
 
 # ============================================================
-# LOAD MODEL
+# LOAD TRAINED MODEL
 # ============================================================
 
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model(
+    model = tf.keras.models.load_model(
         "acne_eczema_other_model.h5"
     )
+    return model
 
 
 model = load_model()
@@ -31,6 +32,8 @@ model = load_model()
 
 # ============================================================
 # CLASS NAMES
+# IMPORTANT:
+# These must match the class order used when training.
 # ============================================================
 
 CLASS_NAMES = [
@@ -41,7 +44,7 @@ CLASS_NAMES = [
 
 
 # ============================================================
-# APP TITLE
+# APPLICATION TITLE
 # ============================================================
 
 st.title("🩺 Acne vs Eczema Classifier")
@@ -56,7 +59,7 @@ st.info(
 
 
 # ============================================================
-# UPLOAD IMAGE
+# IMAGE UPLOADER
 # ============================================================
 
 uploaded_file = st.file_uploader(
@@ -66,7 +69,7 @@ uploaded_file = st.file_uploader(
 
 
 # ============================================================
-# RUN WHEN IMAGE IS UPLOADED
+# PROCESS IMAGE
 # ============================================================
 
 if uploaded_file is not None:
@@ -74,7 +77,7 @@ if uploaded_file is not None:
     try:
 
         # ----------------------------------------------------
-        # OPEN IMAGE
+        # OPEN UPLOADED IMAGE
         # ----------------------------------------------------
 
         image = Image.open(
@@ -83,7 +86,7 @@ if uploaded_file is not None:
 
 
         # ----------------------------------------------------
-        # DISPLAY IMAGE
+        # DISPLAY ORIGINAL IMAGE
         # ----------------------------------------------------
 
         st.image(
@@ -97,7 +100,7 @@ if uploaded_file is not None:
         # RESIZE IMAGE
         # ----------------------------------------------------
 
-        image = image.resize(
+        resized_image = image.resize(
             (224, 224)
         )
 
@@ -106,11 +109,138 @@ if uploaded_file is not None:
         # CONVERT IMAGE TO NUMPY ARRAY
         # ----------------------------------------------------
 
-        image_array = np.array(
-            image,
+        image_data = np.array(
+            resized_image,
             dtype=np.float32
         )
 
+
+        # ----------------------------------------------------
+        # NORMALIZE PIXEL VALUES
+        # ----------------------------------------------------
+
+        image_data = image_data / 255.0
+
+
+        # ----------------------------------------------------
+        # ADD BATCH DIMENSION
+        # ----------------------------------------------------
+
+        image_data = np.expand_dims(
+            image_data,
+            axis=0
+        )
+
+
+        # ----------------------------------------------------
+        # MAKE MODEL PREDICTION
+        # ----------------------------------------------------
+
+        prediction = model.predict(
+            image_data,
+            verbose=0
+        )
+
+
+        # ----------------------------------------------------
+        # GET PREDICTED CLASS INDEX
+        # ----------------------------------------------------
+
+        predicted_index = int(
+            np.argmax(
+                prediction[0]
+            )
+        )
+
+
+        # ----------------------------------------------------
+        # GET PREDICTED CLASS NAME
+        # ----------------------------------------------------
+
+        predicted_class = CLASS_NAMES[
+            predicted_index
+        ]
+
+
+        # ----------------------------------------------------
+        # GET CONFIDENCE
+        # ONLY ONE PERCENTAGE WILL BE DISPLAYED
+        # ----------------------------------------------------
+
+        confidence = float(
+            prediction[0][predicted_index] * 100
+        )
+
+
+        # ====================================================
+        # DISPLAY PREDICTION
+        # ====================================================
+
+        if predicted_class == "Acne":
+
+            st.subheader(
+                "Prediction: Acne"
+            )
+
+        elif predicted_class == "Eczema":
+
+            st.subheader(
+                "Prediction: Eczema"
+            )
+
+        else:
+
+            st.subheader(
+                "Prediction: Neither Acne nor Eczema"
+            )
+
+
+        # ====================================================
+        # DISPLAY ONLY ONE CONFIDENCE PERCENTAGE
+        # ====================================================
+
+        st.write(
+            f"Confidence: {confidence:.2f}%"
+        )
+
+
+        # ====================================================
+        # LOW CONFIDENCE WARNING
+        # ====================================================
+
+        if confidence < 60:
+
+            st.warning(
+                "The model is not very confident about "
+                "this prediction. Please upload a clearer "
+                "image showing the affected skin area."
+            )
+
+
+        # ====================================================
+        # MEDICAL DISCLAIMER
+        # ====================================================
+
+        st.info(
+            "This AI prediction is for educational and "
+            "research purposes only. It is not a medical "
+            "diagnosis."
+        )
+
+
+    # ========================================================
+    # ERROR HANDLING
+    # ========================================================
+
+    except Exception as error:
+
+        st.error(
+            "An error occurred while processing the image."
+        )
+
+        st.exception(
+            error
+        )
 
         # ----------------------------------------------------
         # NORMALIZE IMAGE
