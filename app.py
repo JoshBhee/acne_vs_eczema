@@ -248,7 +248,6 @@ if uploaded_file is not None:
         probabilities[predicted_index] * 100
     )
 
-    return predicted_class, confidence
 
 
 # ============================================================
