@@ -582,7 +582,6 @@ def preprocess_image(image):
 # ==============================
 
 prediction = model.predict(
-    img_array,
     verbose=0
 )
 
