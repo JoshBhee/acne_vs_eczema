@@ -21,7 +21,6 @@ st.set_page_config(
 
 @st.cache_resource
 def load_model():
-
     return tf.keras.models.load_model(
         "acne_eczema_other_model.h5"
     )
@@ -52,8 +51,7 @@ st.write(
 )
 
 st.info(
-    "The model classifies images into Acne, Eczema, "
-    "or Other."
+    "The model classifies images into Acne, Eczema, or Other."
 )
 
 
@@ -63,54 +61,168 @@ st.info(
 
 uploaded_file = st.file_uploader(
     "Choose an image...",
-    type=[
-        "jpg",
-        "jpeg",
-        "png"
-    ]
+    type=["jpg", "jpeg", "png"]
 )
 
 
 # ============================================================
-# IMAGE QUALITY CHECK
+# PREPROCESS IMAGE
 # ============================================================
 
-def check_image_quality(image):
+def prepare_image(image):
 
-    img = np.array(
+    # Resize image
+    image = image.resize((224, 224))
+
+    # Convert image to NumPy array
+    image_array = np.array(
         image,
         dtype=np.float32
     )
 
-    brightness = np.mean(img)
+    # Normalize image
+    image_array = image_array / 255.0
 
-    contrast = np.std(img)
+    # Add batch dimension
+    image_array = np.expand_dims(
+        image_array,
+        axis=0
+    )
 
-    # Image too dark
-    if brightness < 20:
+    return image_array
 
-        return False, (
-            "The image is too dark. "
-            "Please upload an image with better lighting."
+
+# ============================================================
+# PREDICT IMAGE
+# ============================================================
+
+def predict_image(image):
+
+    # Prepare image
+    prepared_image = prepare_image(image)
+
+    # Make prediction
+    result = model.predict(
+        prepared_image,
+        verbose=0
+    )
+
+    # Get prediction values
+    probabilities = result[0]
+
+    # Find highest prediction
+    predicted_index = np.argmax(
+        probabilities
+    )
+
+    # Get predicted class
+    predicted_class = CLASS_NAMES[
+        predicted_index
+    ]
+
+    # Get confidence of predicted class
+    confidence = float(
+        probabilities[predicted_index] * 100
+    )
+
+    return predicted_class, confidence
+
+
+# ============================================================
+# PROCESS IMAGE
+# ============================================================
+
+if uploaded_file is not None:
+
+    try:
+
+        # Open uploaded image
+        image = Image.open(
+            uploaded_file
+        ).convert("RGB")
+
+
+        # Display uploaded image
+        st.image(
+            image,
+            caption="Uploaded Image",
+            use_container_width=True
         )
 
-    # Image too bright
-    if brightness > 250:
 
-        return False, (
-            "The image is too bright. "
-            "Please upload an image with better lighting."
+        # Make prediction
+        predicted_class, confidence = predict_image(
+            image
         )
 
-    # Image has very low contrast
-    if contrast < 10:
 
-        return False, (
-            "The image has very low contrast. "
-            "Please upload a clearer image."
+        # ====================================================
+        # DISPLAY RESULT
+        # ====================================================
+
+        if predicted_class == "Acne":
+
+            st.subheader(
+                "Prediction: Acne"
+            )
+
+        elif predicted_class == "Eczema":
+
+            st.subheader(
+                "Prediction: Eczema"
+            )
+
+        else:
+
+            st.subheader(
+                "Prediction: Neither Acne nor Eczema"
+            )
+
+
+        # ====================================================
+        # DISPLAY ONLY ONE CONFIDENCE PERCENTAGE
+        # ====================================================
+
+        st.write(
+            f"Confidence: {confidence:.2f}%"
         )
 
-    return True, ""
+
+        # ====================================================
+        # LOW CONFIDENCE WARNING
+        # ====================================================
+
+        if confidence < 60:
+
+            st.warning(
+                "⚠️ The model is not very confident "
+                "about this prediction. Please upload "
+                "a clearer image showing the affected "
+                "skin area."
+            )
+
+
+        # ====================================================
+        # MEDICAL DISCLAIMER
+        # ====================================================
+
+        st.info(
+            "⚠️ This AI prediction is for educational "
+            "and research purposes only. It is not "
+            "a medical diagnosis."
+        )
+
+
+    except Exception as error:
+
+        st.error(
+            "An error occurred while processing "
+            "the image."
+        )
+
+        st.exception(
+            error
+    )    return True, ""
 
 
 # ============================================================
