@@ -576,7 +576,6 @@ def preprocess_image(image):
         axis=0
     )
 
-    return img_array
 
 # ==============================
 # MAKE PREDICTION
