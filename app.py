@@ -56,7 +56,7 @@ st.info(
 
 
 # ============================================================
-# IMAGE UPLOAD
+# UPLOAD IMAGE
 # ============================================================
 
 uploaded_file = st.file_uploader(
@@ -66,51 +66,174 @@ uploaded_file = st.file_uploader(
 
 
 # ============================================================
-# PREPROCESS IMAGE
+# RUN WHEN IMAGE IS UPLOADED
 # ============================================================
 
-def prepare_image(image):
+if uploaded_file is not None:
 
-    # Resize image
-    image = image.resize((224, 224))
+    try:
 
-    # Convert image to NumPy array
-    image_array = np.array(
-        image,
-        dtype=np.float32
-    )
+        # ----------------------------------------------------
+        # OPEN IMAGE
+        # ----------------------------------------------------
 
-    # Normalize image
-    image_array = image_array / 255.0
-
-    # Add batch dimension
-    image_array = np.expand_dims(
-        image_array,
-        axis=0
-    )
-
-    return image_array
+        image = Image.open(
+            uploaded_file
+        ).convert("RGB")
 
 
-# ============================================================
-# PREDICT IMAGE
-# ============================================================
+        # ----------------------------------------------------
+        # DISPLAY IMAGE
+        # ----------------------------------------------------
 
-def predict_image(image):
+        st.image(
+            image,
+            caption="Uploaded Image",
+            use_container_width=True
+        )
 
-    # Prepare image
-    prepared_image = prepare_image(image)
 
-    # Make prediction
-    result = model.predict(
-        prepared_image,
-        verbose=0
-    )
+        # ----------------------------------------------------
+        # RESIZE IMAGE
+        # ----------------------------------------------------
 
-    # Get prediction values
-    probabilities = result[0]
+        image = image.resize(
+            (224, 224)
+        )
 
-    # Find highest prediction
+
+        # ----------------------------------------------------
+        # CONVERT IMAGE TO NUMPY ARRAY
+        # ----------------------------------------------------
+
+        image_array = np.array(
+            image,
+            dtype=np.float32
+        )
+
+
+        # ----------------------------------------------------
+        # NORMALIZE IMAGE
+        # ----------------------------------------------------
+
+        image_array = image_array / 255.0
+
+
+        # ----------------------------------------------------
+        # ADD BATCH DIMENSION
+        # ----------------------------------------------------
+
+        image_array = np.expand_dims(
+            image_array,
+            axis=0
+        )
+
+
+        # ----------------------------------------------------
+        # MAKE PREDICTION
+        # ----------------------------------------------------
+
+        prediction = model.predict(
+            image_array,
+            verbose=0
+        )
+
+
+        # ----------------------------------------------------
+        # GET PREDICTED CLASS
+        # ----------------------------------------------------
+
+        predicted_index = np.argmax(
+            prediction[0]
+        )
+
+
+        # ----------------------------------------------------
+        # GET CLASS NAME
+        # ----------------------------------------------------
+
+        predicted_class = CLASS_NAMES[
+            predicted_index
+        ]
+
+
+        # ----------------------------------------------------
+        # GET ONE CONFIDENCE PERCENTAGE
+        # ----------------------------------------------------
+
+        confidence = float(
+            prediction[0][predicted_index] * 100
+        )
+
+
+        # ====================================================
+        # DISPLAY RESULT
+        # ====================================================
+
+        if predicted_class == "Acne":
+
+            st.subheader(
+                "Prediction: Acne"
+            )
+
+        elif predicted_class == "Eczema":
+
+            st.subheader(
+                "Prediction: Eczema"
+            )
+
+        else:
+
+            st.subheader(
+                "Prediction: Neither Acne nor Eczema"
+            )
+
+
+        # ----------------------------------------------------
+        # SHOW ONLY ONE PERCENTAGE
+        # ----------------------------------------------------
+
+        st.write(
+            f"Confidence: {confidence:.2f}%"
+        )
+
+
+        # ====================================================
+        # LOW CONFIDENCE WARNING
+        # ====================================================
+
+        if confidence < 60:
+
+            st.warning(
+                "⚠️ The model is not very confident "
+                "about this prediction. Please upload "
+                "a clearer image showing the affected "
+                "skin area."
+            )
+
+
+        # ====================================================
+        # DISCLAIMER
+        # ====================================================
+
+        st.info(
+            "⚠️ This AI prediction is for educational "
+            "and research purposes only. It is not "
+            "a medical diagnosis."
+        )
+
+
+    # ========================================================
+    # ERROR HANDLING
+    # ========================================================
+
+    except Exception as e:
+
+        st.error(
+            "Something went wrong while processing the image."
+        )
+
+        st.exception(e)    # Find highest prediction
     predicted_index = np.argmax(
         probabilities
     )
