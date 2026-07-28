@@ -1,93 +1,29 @@
- Acne vs Eczema Image Classification
+Acne vs Eczema Image Classifier
 
- GET324 Mini Project
-Course: GET324 – Cloud Computing and AI Model Deployment for Engineering Applications
+GET 324 Mini Project — Group EE9 (Electrical/Electronics Engineering)
+A CNN-based web app (MobileNetV2 transfer learning) that classifies skin images as Acne or Eczema, deployed via Streamlit.
 
- Project Description
-This project is a deep learning-based web application developed to classify skin disease images into two categories:
-Acne and Eczema. A Convolutional Neural Network (CNN) model was trained using a publicly available image dataset and deployed as a Streamlit web application. Users can upload a skin image and receive an instant prediction.
+Live App: https://acnevseczema-group9.streamlit.app/
 
- Features
- 
-- Binary image classification
-- Upload skin images
-- Real-time prediction
-- Confidence score display
-- User-friendly interface
+Description:
+Trained on the Dermnet dataset (Kaggle), filtered to Acne and Eczema categories. Users upload a skin image and get an instant prediction with a confidence score.
+Technologies
+Python, TensorFlow/Keras, MobileNetV2, Streamlit, NumPy, Pillow, Git & GitHub
 
- Dataset
- 
-The model was trained using publicly available Acne and Eczema image datasets collected from online repositories. Images were resized, normalized, and augmented before training.
-
-
- Technologies Used
-- Python
-- TensorFlow/Keras
-- Streamlit
-- NumPy
-- Pillow (PIL)
-- Git & GitHub
-
- Installation
-
-Clone the repository:
-
-```bash
-git clone <repository-link>
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Run the application:
-
-```bash
-streamlit run app.py
-```
-
+How to Run Locally:
+Code
 How to Use
-1. Open the deployed Streamlit application.
-2. Upload an image showing either Acne or Eczema.
-3. Wait for the prediction.
-4. View the predicted class and confidence score.
+Open the deployed app
+Upload a clear skin image (JPG/PNG)
+View the predicted condition and confidence score
 
 Project Files
-- app.py
-- model.h5
-- requirements.txt
-- README.md
+app.py — application source code
+acne_eczema_other_model.h5 — trained model
+requirements.txt — dependencies
 
- Deployment
-Streamlit URL:
-(Add your deployed Streamlit link here.)
-
-GitHub Repository:
-(Add your GitHub repository link here.)
-
-Future Improvements
-- Increase dataset size.
-- Improve model accuracy.
-- Include more skin diseases.
-- Improve user interface.
-- Enhance confidence estimation.
-
+CONTRIBUTORS.md — group members
 Contributors
+See CONTRIBUTORS.md for the full list of group members.
 
-| Name | Registration Number | GitHub Username |
-|------|---------------------|-----------------|
-| OKON, EMEDIONG INIOBONG | 22/EG/EE/2104 | |
-| GEORGE, UDUAK ABRAHAM | 22/EG/EE/2034 | |
-| LINUS ABASIODIONG ANIEKAN | 22/EG/EE/1984 | |
-| UDOH, BENJAMIN NSE | 22/EG/EE/1964 | |
-| EKPAT, ZEPHANIAH INI | 22/EG/EE/2054 | |
-| SAMEKPO AKANINYENE ENOBONG | 22/EG/EE/1974 | |
-| SUNDAY, JOSEPH IFIOK | 22/EG/EE/1994 | |
-| NWAWO, CHARLES BONIFACE | 22/EG/EE/2024 | |
-| SUNDAY, PRECIOUS ABAI | 22/EG/EE/2094 | |
-| OKON, EMEDIONG FRIDAY | 22/EG/EE/2074 | |
-| BASSEY, MFON-ABASI BASSEY | 22/EG/EE/2014 | |
-| ETIM, GODSPOWER IME | 22/EG/EE/2084 | |
-| JACKSON, SAMUEL ETIM | 22/EG/EE/2004 | |
+Group Captain: Sunday, Precious Abai — 22/EG/EE/2094
