@@ -18,7 +18,7 @@ def load_model():
 try:
     model = load_model()
 except Exception as e:
-    st.error(f"⚠️ Failed to load the model file. Please ensure 'acne_eczema_4class_model.keras' is present in the repository.\n\nDetails: {e}")
+    st.error(f"⚠️ Failed to load the model file. Please ensure 'acne_eczema_class_model(1).keras' is present in the repository.\n\nDetails: {e}")
     st.stop()
 
 st.title("Acne vs Eczema Classifier")
