@@ -13,12 +13,12 @@ CONFIDENCE_THRESHOLD = 0.60
 
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model('acne_eczema_4class_model.keras')
+    return tf.keras.models.load_model('acne_eczema_class_model (1).keras')
 
 try:
     model = load_model()
 except Exception as e:
-    st.error(f"⚠️ Failed to load the model file. Please ensure 'acne_eczema_class_model(1).keras' is present in the repository.\n\nDetails: {e}")
+    st.error(f"⚠️ Failed to load the model file. Please ensure 'acne_eczema_class_model (1).keras' is present in the repository.\n\nDetails: {e}")
     st.stop()
 
 st.title("Acne vs Eczema Classifier")
