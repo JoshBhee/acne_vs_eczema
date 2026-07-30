@@ -9,7 +9,7 @@ st.set_page_config(page_title="Acne vs Eczema Classifier", layout="centered")
 # Expected: {'acne': 0, 'eczema': 1, 'non_disease': 2, 'other_disease': 3}
 class_names = ["Acne", "Eczema", "Non-Disease", "Other Skin Disease"]
 
-CONFIDENCE_THRESHOLD = 0.60
+CONFIDENCE_THRESHOLD = 0.50
 
 @st.cache_resource
 def load_model():
